@@ -10,10 +10,13 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.List;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import javax.jdo.JDOHelper;
+import javax.jdo.PersistenceManager;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -38,6 +41,8 @@ public class ArsoUpdaterServlet extends HttpServlet
 	public void doGet(HttpServletRequest req, HttpServletResponse resp)
 			throws IOException 
 	{
+		long startTime = System.currentTimeMillis();
+		
 		resp.setContentType("text/plain");
 		
 		String receivedIndex = "";
@@ -57,9 +62,47 @@ public class ArsoUpdaterServlet extends HttpServlet
 		if (data != null)
 		{
 			ArrayList<WeatherImage> images = getImageUrls(data);
+			ArrayList<WeatherImage> parsedImages = new ArrayList<WeatherImage>();
 			
-			images.get(0).fetch();
+			for (WeatherImage image : images)
+			{
+				try
+				{
+					image.fetch();
+					parsedImages.add(image);
+				}
+				catch (Exception e)
+				{
+					log.warning("Failed to parse image");
+					continue;
+				}
+			}
+			
+			if (parsedImages.size() > 0)
+				storeToDatastore(parsedImages);
+			
+			resp.getWriter().println("UPDATE OK");
+			
+			long endTime = System.currentTimeMillis();
+			log.info("UPDATE OK, parsing took in total: " + (endTime - startTime) + " ms.");
+			
+			return;
 		}
+		
+		resp.getWriter().print("UPDATE ERROR");
+	}
+	
+	private void storeToDatastore(List<WeatherImage> images)
+	{
+		WeatherData weatherData = new WeatherData(Calendar.getInstance().getTime(), images);
+		PersistenceManager pManager = JDOHelper.getPersistenceManagerFactory("transactions-optional").getPersistenceManager();
+		
+		WeatherData oldData = pManager.getObjectById(WeatherData.class, WeatherData.KEY);
+		if (oldData != null)
+			pManager.deletePersistent(oldData);
+		
+		pManager.makePersistent(weatherData);
+		pManager.close();
 	}
 
 	private ArrayList<WeatherImage> getImageUrls(String data)

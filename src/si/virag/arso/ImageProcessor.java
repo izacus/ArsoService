@@ -38,13 +38,19 @@ public class ImageProcessor {
 		this.imageData = sourceImage;
 	}
 	
-	public int[][] processImage()
+	public byte[][] processImage()
 	{
 		PngReader reader = new PngReader(new ByteArrayInputStream(imageData));
 
 		int[][] palette = getPalette(reader.getChunks1());
 		
-		int[][] imageData = new int[reader.imgInfo.samplesPerRow][reader.imgInfo.rows];
+		if (palette == null)
+		{
+			log.severe("Could not parse image palette!");
+			return null;
+		}
+		
+		byte[][] imageData = new byte[reader.imgInfo.samplesPerRow][reader.imgInfo.rows];
 		
 		for (int y = 0; y < reader.imgInfo.rows; y++)
 		{
@@ -88,11 +94,11 @@ public class ImageProcessor {
 		return null;
 	}
 	
-	private int findClosest(int r, int g, int b)
+	private byte findClosest(int r, int g, int b)
 	{
-		int index = 0; long distance = Long.MAX_VALUE;
+		byte index = 0; long distance = Long.MAX_VALUE;
 		
-		for (int i = 0; i < referencePixels.length; i++)
+		for (byte i = 0; i < referencePixels.length; i++)
 		{
 			// Euclidean pixel distance
 			long dist = Math.round(Math.pow(referencePixels[i][0] - r, 2) + Math.pow(referencePixels[i][1] - g, 2) + Math.pow(referencePixels[i][2] - b, 2));

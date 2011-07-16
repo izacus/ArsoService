@@ -9,13 +9,29 @@ import java.net.URL;
 import java.util.Date;
 import java.util.logging.Logger;
 
+import javax.jdo.annotations.IdGeneratorStrategy;
+import javax.jdo.annotations.PersistenceCapable;
+import javax.jdo.annotations.Persistent;
+import javax.jdo.annotations.PrimaryKey;
+
+import com.google.appengine.api.datastore.Key;
+
+@PersistenceCapable
 public class WeatherImage 
 {
 	private static final Logger log = Logger.getLogger(WeatherImage.class.getName());
 
+	@SuppressWarnings("unused")
+	@PrimaryKey
+	@Persistent(valueStrategy = IdGeneratorStrategy.IDENTITY)
+	private Key id;
 	
+	@Persistent
 	private Date valid;
+	@Persistent
 	private String url;
+	@Persistent(serialized = "true")
+	private byte[][] locationData;
 	
 	public WeatherImage(Date valid, String url)
 	{
@@ -45,7 +61,10 @@ public class WeatherImage
 		stream.read(data, 0, conn.getContentLength());
 		
 		ImageProcessor processor = new ImageProcessor(data);
-		processor.processImage();
+		locationData = processor.processImage();
+		
+		if (locationData == null)
+			throw new IOException("Image was not parsed successfully.");
 		
 		log.info("Image from " + this.url + "(" + conn.getContentLength() + "B) received successfully.");
 		
