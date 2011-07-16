@@ -3,6 +3,7 @@ package si.virag.arso;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.StringReader;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.text.ParseException;
@@ -22,8 +23,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.xml.parsers.DocumentBuilderFactory;
 
-import org.apache.tools.ant.filters.StringInputStream;
 import org.w3c.dom.Document;
+import org.xml.sax.InputSource;
 
 import si.virag.arso.data.WeatherData;
 import si.virag.arso.data.WeatherImage;
@@ -201,7 +202,10 @@ public class ArsoUpdaterServlet extends HttpServlet
 	{
 		try 
 		{
-			Document doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(new StringInputStream(xmlData));
+			StringReader reader = new StringReader(xmlData);
+			InputSource source = new InputSource(reader);
+			
+			Document doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(source);
 			
 			if (doc.getChildNodes().getLength() > 0)
 			{
