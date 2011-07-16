@@ -62,6 +62,7 @@ public class ArsoUpdaterServlet extends HttpServlet
 		if (data != null)
 		{
 			ArrayList<WeatherImage> images = getImageUrls(data);
+			ArrayList<WeatherImage> fetchedImages = new ArrayList<WeatherImage>();
 			ArrayList<WeatherImage> parsedImages = new ArrayList<WeatherImage>();
 			
 			for (WeatherImage image : images)
@@ -69,14 +70,27 @@ public class ArsoUpdaterServlet extends HttpServlet
 				try
 				{
 					image.fetch();
+					fetchedImages.add(image);
+				}
+				catch (Exception e)
+				{
+					log.warning("Failed to fetch image");
+					continue;
+				}
+			}
+			
+			for (WeatherImage image : fetchedImages)
+			{
+				try
+				{
+					image.parse();
 					parsedImages.add(image);
 				}
 				catch (Exception e)
 				{
 					log.warning("Failed to parse image");
 					continue;
-				}
-			}
+				}			}
 			
 			if (parsedImages.size() > 0)
 				storeToDatastore(parsedImages);

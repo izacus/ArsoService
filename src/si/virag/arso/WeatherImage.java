@@ -1,20 +1,23 @@
 package si.virag.arso;
 
-import java.io.BufferedInputStream;
-import java.io.DataInputStream;
 import java.io.IOException;
-import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Date;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 import java.util.logging.Logger;
 
 import javax.jdo.annotations.IdGeneratorStrategy;
+import javax.jdo.annotations.NotPersistent;
 import javax.jdo.annotations.PersistenceCapable;
 import javax.jdo.annotations.Persistent;
 import javax.jdo.annotations.PrimaryKey;
 
 import com.google.appengine.api.datastore.Key;
+import com.google.appengine.api.urlfetch.HTTPResponse;
+import com.google.appengine.api.urlfetch.URLFetchService;
+import com.google.appengine.api.urlfetch.URLFetchServiceFactory;
 
 @PersistenceCapable
 public class WeatherImage 
@@ -32,6 +35,9 @@ public class WeatherImage
 	private String url;
 	@Persistent(serialized = "true")
 	private byte[][] locationData;
+	
+	@NotPersistent
+	private Future<HTTPResponse> fetchResult;
 	
 	public WeatherImage(Date valid, String url)
 	{
@@ -51,22 +57,33 @@ public class WeatherImage
 	
 	public void fetch() throws MalformedURLException, IOException
 	{
-		long startTime = System.currentTimeMillis();
+		URLFetchService fetcher = URLFetchServiceFactory.getURLFetchService();
 		URL imageURL = new URL(this.url);
-		HttpURLConnection conn = (HttpURLConnection) imageURL.openConnection();
+		fetchResult = fetcher.fetchAsync(imageURL);
+	}
+	
+	public void parse() throws IOException
+	{
+		long startTime = System.currentTimeMillis();
+
+		HTTPResponse response;
 		
-		byte[] data = new byte[conn.getContentLength()];
+		try 
+		{
+			response = fetchResult.get();
+		} catch (InterruptedException e) {
+			throw new IOException(e.getMessage());
+		} catch (ExecutionException e) {
+			throw new IOException(e.getMessage());
+		}
 		
-		DataInputStream stream = new DataInputStream(new BufferedInputStream(conn.getInputStream()));
-		stream.read(data, 0, conn.getContentLength());
+		byte[] data = response.getContent();
 		
 		ImageProcessor processor = new ImageProcessor(data);
 		locationData = processor.processImage();
 		
 		if (locationData == null)
 			throw new IOException("Image was not parsed successfully.");
-		
-		log.info("Image from " + this.url + "(" + conn.getContentLength() + "B) received successfully.");
 		
 		long endTime = System.currentTimeMillis();
 		
