@@ -58,10 +58,7 @@ public class ArsoUpdaterServlet extends HttpServlet
 		{
 			ArrayList<WeatherImage> images = getImageUrls(data);
 			
-			for (WeatherImage image : images)
-			{
-				resp.getWriter().println(imageDateTime.format(image.getValid()) + " - " + image.getUrl());
-			}
+			images.get(0).fetch();
 		}
 	}
 

@@ -3,5 +3,7 @@
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="con" path="com.google.appengine.eclipse.core.GAE_CONTAINER"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/pngj-for-Google-App-Engine"/>
+	<classpathentry kind="lib" path="/Users/jernej/Documents/workspace/ArsoParser/war/WEB-INF/lib/pngj.jar"/>
 	<classpathentry kind="output" path="war/WEB-INF/classes"/>
 </classpath>

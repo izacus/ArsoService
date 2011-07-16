@@ -1,9 +1,19 @@
 package si.virag.arso;
 
+import java.io.BufferedInputStream;
+import java.io.DataInputStream;
+import java.io.IOException;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.Date;
+import java.util.logging.Logger;
 
 public class WeatherImage 
 {
+	private static final Logger log = Logger.getLogger(WeatherImage.class.getName());
+
+	
 	private Date valid;
 	private String url;
 	
@@ -13,12 +23,35 @@ public class WeatherImage
 		this.url = url;
 	}
 
-	public Date getValid() {
+	public Date getValid() 
+	{
 		return valid;
 	}
 
-	public String getUrl() {
+	public String getUrl() 
+	{
 		return url;
+	}
+	
+	public void fetch() throws MalformedURLException, IOException
+	{
+		long startTime = System.currentTimeMillis();
+		URL imageURL = new URL(this.url);
+		HttpURLConnection conn = (HttpURLConnection) imageURL.openConnection();
+		
+		byte[] data = new byte[conn.getContentLength()];
+		
+		DataInputStream stream = new DataInputStream(new BufferedInputStream(conn.getInputStream()));
+		stream.read(data, 0, conn.getContentLength());
+		
+		ImageProcessor processor = new ImageProcessor(data);
+		processor.processImage();
+		
+		log.info("Image from " + this.url + "(" + conn.getContentLength() + "B) received successfully.");
+		
+		long endTime = System.currentTimeMillis();
+		
+		log.info("Parsing took " + (endTime - startTime) + " ms." );
 	}
 
 	@Override
