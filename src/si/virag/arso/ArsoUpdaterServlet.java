@@ -15,7 +15,7 @@ import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import javax.jdo.JDOHelper;
+import javax.jdo.JDOObjectNotFoundException;
 import javax.jdo.PersistenceManager;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -24,6 +24,9 @@ import javax.xml.parsers.DocumentBuilderFactory;
 
 import org.apache.tools.ant.filters.StringInputStream;
 import org.w3c.dom.Document;
+
+import si.virag.arso.data.WeatherData;
+import si.virag.arso.data.WeatherImage;
 
 @SuppressWarnings("serial")
 public class ArsoUpdaterServlet extends HttpServlet 
@@ -109,11 +112,15 @@ public class ArsoUpdaterServlet extends HttpServlet
 	private void storeToDatastore(List<WeatherImage> images)
 	{
 		WeatherData weatherData = new WeatherData(Calendar.getInstance().getTime(), images);
-		PersistenceManager pManager = JDOHelper.getPersistenceManagerFactory("transactions-optional").getPersistenceManager();
+		PersistenceManager pManager = Datastore.getInstance().getManager();
 		
-		WeatherData oldData = pManager.getObjectById(WeatherData.class, WeatherData.KEY);
-		if (oldData != null)
+		try
+		{
+			WeatherData oldData = pManager.getObjectById(WeatherData.class, WeatherData.KEY);
 			pManager.deletePersistent(oldData);
+		}
+		catch (JDOObjectNotFoundException e)
+		{}
 		
 		pManager.makePersistent(weatherData);
 		pManager.close();

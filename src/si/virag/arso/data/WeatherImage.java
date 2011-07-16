@@ -1,4 +1,4 @@
-package si.virag.arso;
+package si.virag.arso.data;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -13,6 +13,8 @@ import javax.jdo.annotations.NotPersistent;
 import javax.jdo.annotations.PersistenceCapable;
 import javax.jdo.annotations.Persistent;
 import javax.jdo.annotations.PrimaryKey;
+
+import si.virag.arso.ImageProcessor;
 
 import com.google.appengine.api.datastore.Key;
 import com.google.appengine.api.urlfetch.HTTPResponse;
@@ -55,6 +57,10 @@ public class WeatherImage
 		return url;
 	}
 	
+	public byte[][] getLocationData() {
+		return locationData;
+	}
+	
 	public void fetch() throws MalformedURLException, IOException
 	{
 		URLFetchService fetcher = URLFetchServiceFactory.getURLFetchService();
@@ -80,9 +86,9 @@ public class WeatherImage
 		byte[] data = response.getContent();
 		
 		ImageProcessor processor = new ImageProcessor(data);
-		locationData = processor.processImage();
+		this.locationData = processor.processImage();
 		
-		if (locationData == null)
+		if (getLocationData() == null)
 			throw new IOException("Image was not parsed successfully.");
 		
 		long endTime = System.currentTimeMillis();

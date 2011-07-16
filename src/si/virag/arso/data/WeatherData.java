@@ -1,4 +1,4 @@
-package si.virag.arso;
+package si.virag.arso.data;
 
 import java.util.Collections;
 import java.util.Comparator;
