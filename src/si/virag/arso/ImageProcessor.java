@@ -15,8 +15,13 @@ public class ImageProcessor {
 	
 	private final byte[] imageData;
 	
-	private static final int[][] referencePixels = {
-		{ 242, 242, 242 },			// CLEAR
+	private static final int PAD_TOP = 50;
+	private static final int PAD_BOTTOM = 140;
+	private static final int PAD_LEFT = 160;
+	private static final int PAD_RIGHT = 50;
+	
+	public static final int[][] referencePixels = {
+		{ 200, 200, 200 },			// CLEAR
 		{ 153, 160, 193 },			// CLOUD 40
 		{ 178, 179, 219 },			// CLOUD 60
 		{ 153, 160, 193 },			// CLOUD 80
@@ -50,21 +55,24 @@ public class ImageProcessor {
 			return null;
 		}
 		
-		byte[][] imageData = new byte[reader.imgInfo.samplesPerRow][reader.imgInfo.rows];
+		byte[][] processedData = new byte[reader.imgInfo.samplesPerRow - (PAD_LEFT + PAD_RIGHT)][reader.imgInfo.rows - (PAD_TOP + PAD_BOTTOM)];
 		
 		for (int y = 0; y < reader.imgInfo.rows; y++)
-		{
+		{	
 			ImageLine line = reader.readRow(y);
 			
-			for (int x = 0; x < line.len; x++)
+			if (y < PAD_TOP || y >= (reader.imgInfo.rows - PAD_BOTTOM))
+				continue;
+			
+			for (int x = PAD_LEFT; x < (line.len - PAD_RIGHT); x++)
 			{	
-				imageData[x][y] = findClosest(palette[line.scanline[x]][0], palette[line.scanline[x]][1], palette[line.scanline[x]][2]);
+				processedData[x - PAD_LEFT][y - PAD_TOP] = findClosest(palette[line.scanline[x]][0], palette[line.scanline[x]][1], palette[line.scanline[x]][2]);
 			}
 		}
 		
 		reader.end();
 		
-		return imageData;
+		return processedData;
 	}
 	
 	private int[][] getPalette(List<PngChunk> chunks)
@@ -84,8 +92,6 @@ public class ImageProcessor {
 					palette[entry][2] = (chunk.data[i + 2] & 0xFF);
 					entry++;
 				}
-				
-				log.info("Processed PNG palette with " + entry + " entries.");
 				
 				return palette;
 			}

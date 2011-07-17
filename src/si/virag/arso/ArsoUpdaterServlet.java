@@ -92,9 +92,10 @@ public class ArsoUpdaterServlet extends HttpServlet
 				}
 				catch (Exception e)
 				{
-					log.warning("Failed to parse image");
+					log.warning("Failed to parse image: " + e.getMessage());
 					continue;
-				}			}
+				}			
+			}
 			
 			if (parsedImages.size() > 0)
 				storeToDatastore(parsedImages);
@@ -112,9 +113,11 @@ public class ArsoUpdaterServlet extends HttpServlet
 	
 	private void storeToDatastore(List<WeatherImage> images)
 	{
-		WeatherData weatherData = new WeatherData(Calendar.getInstance().getTime(), images);
-		PersistenceManager pManager = Datastore.getInstance().getManager();
+		Date updateTime = Calendar.getInstance().getTime();
 		
+		WeatherData weatherData = new WeatherData(updateTime, images);
+		PersistenceManager pManager = Datastore.getInstance().getManager();
+			
 		try
 		{
 			WeatherData oldData = pManager.getObjectById(WeatherData.class, WeatherData.KEY);
